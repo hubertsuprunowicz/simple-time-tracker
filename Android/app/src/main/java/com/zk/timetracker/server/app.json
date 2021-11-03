@@ -1,0 +1,36 @@
+{
+  "users": [
+    {
+      "id": 0,
+      "firstName": "",
+      "lastName": "",
+      "image": ""
+    }
+  ],
+  "projects": [
+    {
+      "id": 0,
+      "name": "",
+      "description": "",
+      "users": []
+    }
+  ],
+  "events": [
+    {
+      "id": 0,
+      "userId": 0,
+      "projectId": 0,
+      "started": "",
+      "ended": "",
+      "isBillable": false,
+      "isRemote": false,
+      "description": "",
+      "tags": [
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    }
+  ]
+}

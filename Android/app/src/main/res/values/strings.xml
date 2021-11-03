@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">TimeTracker</string>
+    <string name="timetracker_route">TimeTracker</string>
+    <string name="another_route">Another</string>
+</resources>
