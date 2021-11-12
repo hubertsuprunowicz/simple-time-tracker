@@ -1,13 +1,11 @@
 package com.zk.timetracker
 
-import TimeTrackerScreen
+import com.zk.timetracker.screens.TimeTrackerScreen
 import androidx.annotation.StringRes
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EditCalendar
-import androidx.compose.material.icons.filled.FoodBank
 import androidx.compose.material.icons.filled.LockClock
-import androidx.compose.material.icons.filled.Terrain
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -60,16 +58,42 @@ private fun MainScreenNavigationConfigurations(
 ) {
     NavHost(navController, startDestination = BottomNavigationScreens.TimeTracker.route) {
         composable(BottomNavigationScreens.TimeTracker.route) {
-            TimeTrackerScreen()
+            TimeTrackerScreen(navController)
         }
         composable(BottomNavigationScreens.Another.route) {
             AnotherScreen()
         }
+        composable("events/{eventId}") { backStackEntry ->
+            run {
+                val eventId = backStackEntry.arguments?.getString("eventId") ?: throw Exception()
+                return@composable EventScreen(eventId)
+            }
+        }
+
     }
 }
 
 @Composable
 fun AnotherScreen() {
+//    val context = LocalContext.current
+//    val customView = remember { LottieAnimationView(context) }
+//    // Adds view to Compose
+//    AndroidView(
+//        { customView },
+//        modifier = Modifier.background(Color.Black)
+//    ) { view ->
+//        // View's been inflated - add logic here if necessary
+//        with(view) {
+//            setAnimation(scaryAnimation.animId)
+//            playAnimation()
+//            repeatMode = LottieDrawable.REVERSE
+//        }
+//    }
+}
+
+@Composable
+fun EventScreen(eventId: String) {
+    Text("Event - $eventId")
 //    val context = LocalContext.current
 //    val customView = remember { LottieAnimationView(context) }
 //    // Adds view to Compose
