@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId "com.zk.timetracker"
-        minSdkVersion 21
+        minSdkVersion 26
         targetSdkVersion 31
         versionCode 1
         versionName "1.0"
@@ -41,6 +41,13 @@ android {
         kotlinCompilerExtensionVersion compose_version
 //        kotlinCompilerVersion '1.5.30'
     }
+    sourceSets {
+        main {
+            assets {
+                srcDirs 'src/main/assets'
+            }
+        }
+    }
 }
 
 dependencies {
@@ -53,6 +60,10 @@ dependencies {
     //Lottie
     def lottieVersion = "3.4.4"
     implementation "com.airbnb.android:lottie:$lottieVersion"
+
+    //
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.0'
+    implementation 'com.google.code.gson:gson:2.8.5'
 
     //JetpackComposekotlin-android-extensions
     implementation "androidx.compose.ui:ui:$compose_version"
