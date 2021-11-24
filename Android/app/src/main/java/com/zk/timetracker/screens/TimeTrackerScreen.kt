@@ -1,13 +1,12 @@
 package com.zk.timetracker.screens
 
-import android.os.Build
 import android.os.CountDownTimer
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MonetizationOn
@@ -24,24 +23,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
+import com.zk.timetracker.error
 import com.zk.timetracker.models.Event
 import com.zk.timetracker.models.eventsList
 import com.zk.timetracker.ui.grey200
 import com.zk.timetracker.ui.grey400
 import com.zk.timetracker.ui.purple200
 import com.zk.timetracker.ui.shapes
-import kotlinx.coroutines.ObsoleteCoroutinesApi
 import java.text.SimpleDateFormat
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.util.*
 import kotlin.math.floor
-import kotlin.math.truncate
 
 //@Preview
 @Composable
@@ -286,9 +286,12 @@ fun Body(navController: NavHostController, events: SnapshotStateList<Event>) {
 
 @Composable
 fun Item(event: Event, navController: NavHostController) {
+    val openDialog = remember { mutableStateOf(false) }
+
     Button(
         onClick = {
-            navController.navigate("events/${event.id}")
+            openDialog.value = true
+//            navController.navigate("events/${event.id}")
         },
         colors = ButtonDefaults.outlinedButtonColors(
             backgroundColor = Color.White,
@@ -343,4 +346,196 @@ fun Item(event: Event, navController: NavHostController) {
         color = grey400, thickness = 1.dp, modifier = Modifier
             .padding(0.dp, 0.dp, 0.dp, 20.dp)
     )
+
+    if (openDialog.value) {
+        Dialog(
+            onDismissRequest = {
+                openDialog.value = false
+            },
+            content = { DialogForm(closeDialog = { openDialog.value = false }, event = event) }
+        )
+    }
 }
+
+data class Validation(val values: Map<String, Any>) {
+    fun validate() {
+
+    }
+}
+
+data class Form<T>(
+    val start: String,
+    val end: String,
+    val description: String,
+    val isBillable: Boolean,
+    val isRemote: Boolean
+)
+
+@Composable
+fun DialogForm(closeDialog: () -> Unit, event: Event) {
+    val hasError =
+        remember {
+            mutableMapOf(
+                Pair("started", false),
+                Pair("ended", false),
+                Pair("description", false)
+            )
+        }
+
+    val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm")
+    val startDateTime = LocalDateTime.parse(event.started)
+    val endDateTime = LocalDateTime.parse(event.ended)
+
+    val startState = remember { mutableStateOf(TextFieldValue(formatter.format(startDateTime))) }
+    val endState = remember { mutableStateOf(TextFieldValue(formatter.format(endDateTime))) }
+    val descriptionState = remember { mutableStateOf(TextFieldValue(event.description)) }
+    val isBillableState = remember { mutableStateOf(event.isBillable) }
+    val isRemoteState = remember { mutableStateOf(event.isRemote) }
+
+    val onStartChange: (TextFieldValue) -> Unit = {
+        startState.value = it
+
+        try {
+            formatter.parse(it.text)
+            hasError["started"] = false
+        } catch (e: DateTimeParseException) {
+            hasError["started"] = true
+        }
+    }
+
+    val onEndChange: (TextFieldValue) -> Unit = {
+        endState.value = it
+
+        try {
+            formatter.parse(it.text)
+            hasError["ended"] = false
+        } catch (
+            e: DateTimeParseException
+        ) {
+            hasError["ended"] = true
+        }
+    }
+
+    val onDescriptionChange: (TextFieldValue) -> Unit = {
+        descriptionState.value = it
+        hasError["description"] = it.text.length > 120
+    }
+
+    val onSubmit: () -> Unit = {
+        if (hasError.values.find { it } != null) {
+            // void
+        } else {
+            // mutate state
+        }
+    }
+
+    Box(
+        Modifier
+            .fillMaxSize()
+            .padding(0.dp, 60.dp)
+            .clip(RoundedCornerShape(15.dp)),
+        contentAlignment = Alignment.TopStart,
+
+    ) {
+
+        Column(
+            Modifier
+                .fillMaxSize()
+                .background(Color.White),
+        ) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(15.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column() {
+                    Text("Today", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Spacer(modifier = Modifier.size(15.dp))
+
+                    OutlinedTextField(
+                        label = { Text("Started (dd-MM-yyyy HH:mm)") },
+                        value = startState.value,
+                        onValueChange = onStartChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.error(hasError["started"] == true)
+                    )
+                    OutlinedTextField(
+                        label = { Text("Ended (dd-MM-yyyy HH:mm)") },
+                        value = endState.value,
+                        onValueChange = onEndChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.error(hasError["ended"] == true)
+                    )
+                    OutlinedTextField(
+                        label = { Text("Description") },
+                        value = descriptionState.value,
+                        onValueChange = onDescriptionChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.error(hasError["description"] == true)
+                    )
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(text = "Billable")
+                            Switch(
+                                checked = isBillableState.value,
+                                enabled = false,
+                                onCheckedChange = { isBillableState.value = it },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.Black
+                                ),
+                            )
+                        }
+                        Column {
+                            Text(text = "Remote")
+                            Switch(
+                                checked = isRemoteState.value,
+                                enabled = false,
+                                onCheckedChange = { isRemoteState.value = it },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.Black
+                                ),
+                            )
+                        }
+                    }
+                }
+
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Button(enabled = true, onClick = {
+                        closeDialog()
+                    }) {
+                        Text(text = "Cancel")
+                    }
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Button(enabled = false, onClick = {
+
+                    }) {
+                        Text(text = "Save")
+                    }
+                }
+            }
+        }
+    }
+}
+
+//@Composable
+//fun ShowTimePicker(context: Context, initHour: Int, initMinute: Int) {
+//    val time = remember { mutableStateOf("") }
+//    val timePickerDialog = TimePickerDialog(
+//        context,
+//        {_, hour : Int, minute: Int ->
+//            time.value = "$hour:$minute"
+//        }, initHour, initMinute, false
+//    )
+//    Button(onClick = {
+//        timePickerDialog.show()
+//    }) {
+//        Text(text = "Open Time Picker")
+//    }
+//}
