@@ -1,10 +1,10 @@
 package com.zk.timetracker.screens
 
-import android.os.CountDownTimer
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -13,10 +13,7 @@ import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SettingsRemote
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
+import com.zk.timetracker.Timer
 import com.zk.timetracker.error
 import com.zk.timetracker.models.Event
 import com.zk.timetracker.models.eventsList
@@ -35,6 +33,7 @@ import com.zk.timetracker.ui.grey200
 import com.zk.timetracker.ui.grey400
 import com.zk.timetracker.ui.purple200
 import com.zk.timetracker.ui.shapes
+import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -45,7 +44,10 @@ import kotlin.math.floor
 
 //@Preview
 @Composable
-fun TimeTrackerScreen(navController: NavHostController) {
+fun TimeTrackerScreen(
+    navController: NavHostController, counter:
+    MutableState<Int>, isPlaying: MutableState<Boolean>, timer: Timer
+) {
     val events = remember { mutableStateListOf<Event>() }
     events.swapList(eventsList)
 
@@ -55,14 +57,34 @@ fun TimeTrackerScreen(navController: NavHostController) {
             .background(color = grey200),
 
         ) {
-        Header(events)
+        Header(events, counter, isPlaying, timer)
         Body(navController, events)
     }
 
 }
 
+//suspend fun getLocation(scope: CoroutineScope): Int {
+////    val scope = MainScope()
+//    globalVar ++;
+//    val timer = AtomicInteger(0)
+//    val startTimer = {
+//        scope.launch {
+//            while (true) {
+//                delay(1000)
+//                println(timer.getAndIncrement())
+//            }
+//        }
+//
+//    }
+//    return timer.get()
+//}
+
 @Composable
-fun Header(events: SnapshotStateList<Event>) {
+fun Header(
+    events: SnapshotStateList<Event>, passedSeconds:
+    MutableState<Int>,
+    isPlaying: MutableState<Boolean>, timer: Timer
+) {
 
     Surface(
         elevation = 8.dp,
@@ -78,64 +100,122 @@ fun Header(events: SnapshotStateList<Event>) {
 
             val isBillableState = remember { mutableStateOf(true) }
             val isRemoteState = remember { mutableStateOf(true) }
-            val isWorking = remember { mutableStateOf(false) }
             val startedState = remember { mutableStateOf(LocalDateTime.now(ZoneOffset.UTC)) }
-            val passedSeconds = remember { mutableStateOf(0) }
+//            val passedSeconds = remember { mutableStateOf(0) }
 
             val now: LocalDateTime = LocalDateTime.now()
             val end: LocalDateTime = now.plusDays(1).withHour(0).withMinute(0).withSecond(0)
 
+
+//            fun xdd() {
+//                scope.launch {
+//                    while(true) {
+//                        delay(1000)
+//                        println("atomic: "+currentOnTimeout.atomicTimer.get())
+//                    }
+//                }
+////                println(currentOnTimeout.atomicTimer.get())
+//            }
+////            if (timer.atomicTimer.get() != 0) {
+////                xdd()
+////            }
+//            xdd()
+
+
             val secondsToEndOfTheDay =
                 end.toEpochSecond(ZoneOffset.UTC) - now.toEpochSecond(ZoneOffset.UTC)
 
-            val countDownTimer: CountDownTimer =
-                object : CountDownTimer(secondsToEndOfTheDay * 1000, 1000) {
-                    override fun onTick(millisUntilFinished: Long) {
-                        if (!isWorking.value) {
-                            cancel()
-                            onFinish()
-                        } else {
-                            passedSeconds.value += 1
-                        }
-                    }
+//            val countDownTimer: CountDownTimer =
+//                object : CountDownTimer(secondsToEndOfTheDay * 1000, 1000) {
+//                    override fun onTick(millisUntilFinished: Long) {
+//                        if (!isPlaying.value) {
+//                            cancel()
+//                            onFinish()
+//                        } else {
+//                            passedSeconds.value += 1
+//                        }
+//                    }
+//
+//                    override fun onFinish() {
+//                        isPlaying.value = false
+//                        passedSeconds.value = 0
+//                        eventsList.add(
+//                            Event(
+//                                id = eventsList.size,
+//                                userId = 0,
+//                                projectId = 0,
+//                                description = "Code",
+//                                isBillable = isBillableState.value,
+//                                isRemote = isRemoteState.value,
+//                                tagsId = mutableListOf(),
+//                                started = startedState.value.toString(),
+//                                ended = startedState.value.withSecond(passedSeconds.value)
+//                                    .toString()
+//                            )
+//                        )
+//                        events.swapList(eventsList)
+//                    }
+//                }
 
-                    override fun onFinish() {
-                        isWorking.value = false
-                        passedSeconds.value = 0
-                        println(eventsList)
-                        eventsList.add(
-                            Event(
-                                id = eventsList.size,
-                                userId = 0,
-                                projectId = 0,
-                                description = "Code",
-                                isBillable = isBillableState.value,
-                                isRemote = isRemoteState.value,
-                                tagsId = mutableListOf(),
-                                started = startedState.value.toString(),
-                                ended = startedState.value.withSecond(passedSeconds.value)
-                                    .toString()
-                            )
-                        )
-                        events.swapList(eventsList)
+//            LaunchedEffect(counter) {
+//                println("EFFECT")
+//                snapshotFlow {
+//                    currentOnTimeout
+//                }.run {
+//                    println("EFFECT timer")
+//                }
+////        snapshotFlow { listState.firstVisibleItemIndex }
+////            .map { index -> index > 0 }
+////            .distinctUntilChanged()
+////            .filter { it == true }
+////            .collect {
+////                MyAnalyticsService.sendScrolledPastFirstItemEvent()
+////            }
+//            }
+
+            val scope = MainScope()
+            fun onStart() {
+//                countDownTimer.start()
+
+                isPlaying.value = true
+                scope.launch {
+                    timer.startTimer {
+                        passedSeconds.value++
                     }
                 }
 
-            fun startTimer() {
-                isWorking.value = true
-                countDownTimer.start()
+//                scope.launch {
+//                    while(true) {
+//                        delay(1000)
+//                        passedSeconds.value++
+//                    }
+//                }
             }
 
             fun onStop() {
-                countDownTimer.cancel()
+                isPlaying.value = false
                 passedSeconds.value = 0
-                isWorking.value = false
+                scope.cancel()
+                timer.stopTimer {  }
+
+                eventsList.add(
+                    Event(
+                        id = eventsList.size,
+                        userId = 0,
+                        projectId = 0,
+                        description = "Code",
+                        isBillable = isBillableState.value,
+                        isRemote = isRemoteState.value,
+                        tagsId = mutableListOf(),
+                        started = startedState.value.toString(),
+                        ended = startedState.value.withSecond(passedSeconds.value)
+                            .toString()
+                    )
+                )
+                events.swapList(eventsList)
+
             }
 
-            fun onStart() {
-                startTimer()
-                isWorking.value = true
-            }
 
             Column(
                 Modifier
@@ -209,7 +289,7 @@ fun Header(events: SnapshotStateList<Event>) {
                                     Text(text = "Billable", color = Color.White)
                                     Switch(
                                         checked = isBillableState.value,
-                                        enabled = !isWorking.value,
+                                        enabled = !isPlaying.value,
                                         onCheckedChange = { isBillableState.value = it },
                                         colors = SwitchDefaults.colors(
                                             checkedThumbColor = Color.White
@@ -219,7 +299,7 @@ fun Header(events: SnapshotStateList<Event>) {
 
 
                                 OutlinedButton(
-                                    onClick = { if (isWorking.value) onStop() else onStart() },
+                                    onClick = { if (isPlaying.value) onStop() else onStart() },
                                     modifier = Modifier.size(55.dp),
                                     shape = CircleShape,
                                     border = BorderStroke(2.dp, Color.White),
@@ -230,7 +310,7 @@ fun Header(events: SnapshotStateList<Event>) {
                                     )
                                 ) {
                                     Icon(
-                                        imageVector = if (isWorking.value) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                        imageVector = if (isPlaying.value) Icons.Default.Pause else Icons.Default.PlayArrow,
                                         contentDescription = "content description"
                                     )
                                 }
@@ -238,7 +318,7 @@ fun Header(events: SnapshotStateList<Event>) {
                                     Text(text = "Remote", color = Color.White)
                                     Switch(
                                         checked = isRemoteState.value,
-                                        enabled = !isWorking.value,
+                                        enabled = !isPlaying.value,
                                         onCheckedChange = { isRemoteState.value = it },
                                         colors = SwitchDefaults.colors(
                                             checkedThumbColor = Color.White
@@ -262,7 +342,6 @@ fun <T> SnapshotStateList<T>.swapList(newList: List<T>) {
 
 @Composable
 fun Body(navController: NavHostController, events: SnapshotStateList<Event>) {
-
     Box(
         Modifier
             .fillMaxSize()
@@ -275,11 +354,32 @@ fun Body(navController: NavHostController, events: SnapshotStateList<Event>) {
         ) {
             Text("Today", fontWeight = FontWeight.Bold, fontSize = 20.sp)
             Spacer(modifier = Modifier.size(15.dp))
-            LazyColumn() {
-                items(events.size) { index ->
-                    Item(events.reversed()[index], navController)
-                }
-            }
+            EventsList(navController, events)
+        }
+    }
+}
+
+//@Composable
+//fun EventsList(navController: NavHostController, events: Flow<PagingData<Event>>) {
+////fun EventsList(navController: NavHostController, events: SnapshotStateList<Event>) {
+//    val lazyEvents: LazyPagingItems<Event> = events.collectAsLazyPagingItems()
+//    LazyColumn {
+//        items(lazyEvents) {
+//            event -> event?.let {
+//                Item(it, navController)
+//            }
+//        }
+//    }
+//
+//}
+
+
+@Composable
+fun EventsList(navController: NavHostController, events: SnapshotStateList<Event>) {
+    val reversedEvents = events.reversed()
+    LazyColumn() {
+        items(reversedEvents) {
+            Item(it, navController)
         }
     }
 }
@@ -436,7 +536,7 @@ fun DialogForm(closeDialog: () -> Unit, event: Event) {
             .clip(RoundedCornerShape(15.dp)),
         contentAlignment = Alignment.TopStart,
 
-    ) {
+        ) {
 
         Column(
             Modifier

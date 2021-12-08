@@ -1,16 +1,12 @@
 package com.zk.timetracker
 
-import android.os.Build
-import android.util.Log
-import androidx.annotation.RequiresApi
 import com.zk.timetracker.screens.TimeTrackerScreen
 import androidx.annotation.StringRes
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.LockClock
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -22,7 +18,8 @@ import androidx.navigation.compose.rememberNavController
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.zk.timetracker.models.*
-import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.newCoroutineContext
 
 sealed class BottomNavigationScreens(
     val route: String,
@@ -74,9 +71,13 @@ fun MainScreen() {
 private fun MainScreenNavigationConfigurations(
     navController: NavHostController
 ) {
+    val passedSeconds = remember { mutableStateOf(0) }
+    val isPlaying = remember { mutableStateOf(false) }
+    val timer = Timer(true)
+
     NavHost(navController, startDestination = BottomNavigationScreens.TimeTracker.route) {
         composable(BottomNavigationScreens.TimeTracker.route) {
-            TimeTrackerScreen(navController)
+            TimeTrackerScreen(navController, passedSeconds, isPlaying, timer)
         }
         composable(BottomNavigationScreens.Another.route) {
             AnotherScreen()
