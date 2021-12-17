@@ -1,11 +1,13 @@
 package com.zk.timetracker
 
 import android.content.Context
+import android.os.CountDownTimer
 import android.util.Log
 import android.util.Patterns
 import androidx.compose.material.TextFieldColors
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.MediatorLiveData
@@ -41,51 +43,34 @@ fun TextFieldDefaults.error(isError: Boolean): TextFieldColors {
     )
 }
 
-data class Timer(var isRunning: Boolean) {
-//    private val scope = MainScope()
+class Timer(val passedSeconds: MutableState<Int>, val isPlaying: MutableState<Boolean>) {
+    val secondsToEndOfTheDay = 999999999L
+    private val countDownTimer: CountDownTimer =
+        object : CountDownTimer(secondsToEndOfTheDay * 1000, 10) {
+            override fun onTick(millisUntilFinished: Long) {
+                if (!isPlaying.value) {
+                    cancel()
+                    onFinish()
+                } else {
+                    passedSeconds.value += 1
+                }
+            }
 
-    suspend fun startTimer(callback: () -> Unit) {
-        while (isRunning) {
-            delay(1000)
-            callback()
+            override fun onFinish() {
+                isPlaying.value = false
+                passedSeconds.value = 0
+            }
         }
+
+    fun play() {
+        isPlaying.value = true
+        countDownTimer.start()
     }
 
-
-    fun stopTimer (callback: () -> Unit) {
-        isRunning = false
+    fun stop(callback: () -> Unit) {
         callback()
+        isPlaying.value = false
+        passedSeconds.value = 0
+        countDownTimer.cancel()
     }
 }
-//
-//val scope = MainScope()
-//suspend fun startTimer(): Int {
-//    val startTimer = {
-//        scope.launch {
-//            while (true) {
-//                delay(1000)
-//                println(timer.getAndIncrement())
-//            }
-//        }
-//
-//    }
-//    return timer.get()
-//}
-
-//@HiltViewModel
-//class FormValidationViewModel @Inject constructor() : ViewModel() {
-//
-//    val emailAddress = MutableLiveData<String>("")
-//
-//    val valid = MediatorLiveData<Boolean>().apply {
-//        addSource(emailAddress) {
-//            val valid = isFormValid(it)
-//            Log.d(it, valid.toString())
-//            value = valid
-//        }
-//    }
-//
-//    fun isFormValid(emailAddress: String): Boolean {
-//        return Patterns.EMAIL_ADDRESS.matcher(emailAddress).matches()
-//    }
-//}

@@ -1,5 +1,6 @@
 package com.zk.timetracker.screens
 
+import android.content.res.Resources
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -9,10 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MonetizationOn
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SettingsRemote
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -24,29 +22,27 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.navigation.NavHostController
 import com.zk.timetracker.Timer
 import com.zk.timetracker.error
 import com.zk.timetracker.models.Event
 import com.zk.timetracker.models.eventsList
+import com.zk.timetracker.models.projectsList
 import com.zk.timetracker.ui.grey200
 import com.zk.timetracker.ui.grey400
 import com.zk.timetracker.ui.purple200
 import com.zk.timetracker.ui.shapes
-import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.time.temporal.ChronoUnit
 import java.util.*
 import kotlin.math.floor
 
-//@Preview
 @Composable
 fun TimeTrackerScreen(
-    navController: NavHostController, counter:
-    MutableState<Int>, isPlaying: MutableState<Boolean>, timer: Timer
+    counter: MutableState<Int>, isPlaying: MutableState<Boolean>, timer: Timer
 ) {
     val events = remember { mutableStateListOf<Event>() }
     events.swapList(eventsList)
@@ -58,26 +54,9 @@ fun TimeTrackerScreen(
 
         ) {
         Header(events, counter, isPlaying, timer)
-        Body(navController, events)
+        Body(events)
     }
-
 }
-
-//suspend fun getLocation(scope: CoroutineScope): Int {
-////    val scope = MainScope()
-//    globalVar ++;
-//    val timer = AtomicInteger(0)
-//    val startTimer = {
-//        scope.launch {
-//            while (true) {
-//                delay(1000)
-//                println(timer.getAndIncrement())
-//            }
-//        }
-//
-//    }
-//    return timer.get()
-//}
 
 @Composable
 fun Header(
@@ -101,119 +80,35 @@ fun Header(
             val isBillableState = remember { mutableStateOf(true) }
             val isRemoteState = remember { mutableStateOf(true) }
             val startedState = remember { mutableStateOf(LocalDateTime.now(ZoneOffset.UTC)) }
-//            val passedSeconds = remember { mutableStateOf(0) }
 
             val now: LocalDateTime = LocalDateTime.now()
             val end: LocalDateTime = now.plusDays(1).withHour(0).withMinute(0).withSecond(0)
 
-
-//            fun xdd() {
-//                scope.launch {
-//                    while(true) {
-//                        delay(1000)
-//                        println("atomic: "+currentOnTimeout.atomicTimer.get())
-//                    }
-//                }
-////                println(currentOnTimeout.atomicTimer.get())
-//            }
-////            if (timer.atomicTimer.get() != 0) {
-////                xdd()
-////            }
-//            xdd()
-
-
             val secondsToEndOfTheDay =
                 end.toEpochSecond(ZoneOffset.UTC) - now.toEpochSecond(ZoneOffset.UTC)
 
-//            val countDownTimer: CountDownTimer =
-//                object : CountDownTimer(secondsToEndOfTheDay * 1000, 1000) {
-//                    override fun onTick(millisUntilFinished: Long) {
-//                        if (!isPlaying.value) {
-//                            cancel()
-//                            onFinish()
-//                        } else {
-//                            passedSeconds.value += 1
-//                        }
-//                    }
-//
-//                    override fun onFinish() {
-//                        isPlaying.value = false
-//                        passedSeconds.value = 0
-//                        eventsList.add(
-//                            Event(
-//                                id = eventsList.size,
-//                                userId = 0,
-//                                projectId = 0,
-//                                description = "Code",
-//                                isBillable = isBillableState.value,
-//                                isRemote = isRemoteState.value,
-//                                tagsId = mutableListOf(),
-//                                started = startedState.value.toString(),
-//                                ended = startedState.value.withSecond(passedSeconds.value)
-//                                    .toString()
-//                            )
-//                        )
-//                        events.swapList(eventsList)
-//                    }
-//                }
-
-//            LaunchedEffect(counter) {
-//                println("EFFECT")
-//                snapshotFlow {
-//                    currentOnTimeout
-//                }.run {
-//                    println("EFFECT timer")
-//                }
-////        snapshotFlow { listState.firstVisibleItemIndex }
-////            .map { index -> index > 0 }
-////            .distinctUntilChanged()
-////            .filter { it == true }
-////            .collect {
-////                MyAnalyticsService.sendScrolledPastFirstItemEvent()
-////            }
-//            }
-
-            val scope = MainScope()
             fun onStart() {
-//                countDownTimer.start()
-
-                isPlaying.value = true
-                scope.launch {
-                    timer.startTimer {
-                        passedSeconds.value++
-                    }
-                }
-
-//                scope.launch {
-//                    while(true) {
-//                        delay(1000)
-//                        passedSeconds.value++
-//                    }
-//                }
+                timer.play()
             }
 
             fun onStop() {
-                isPlaying.value = false
-                passedSeconds.value = 0
-                scope.cancel()
-                timer.stopTimer {  }
-
-                eventsList.add(
-                    Event(
-                        id = eventsList.size,
-                        userId = 0,
-                        projectId = 0,
-                        description = "Code",
-                        isBillable = isBillableState.value,
-                        isRemote = isRemoteState.value,
-                        tagsId = mutableListOf(),
-                        started = startedState.value.toString(),
-                        ended = startedState.value.withSecond(passedSeconds.value)
-                            .toString()
+                timer.stop {
+                    eventsList.add(
+                        Event(
+                            id = eventsList.size,
+                            userId = 0,
+                            projectId = 0,
+                            description = "Code",
+                            isBillable = isBillableState.value,
+                            isRemote = isRemoteState.value,
+                            tagsId = mutableListOf(),
+                            started = startedState.value.toString(),
+                            ended = startedState.value.plusSeconds(passedSeconds.value.toLong())
+                                .toString()
+                        )
                     )
-                )
-                events.swapList(eventsList)
-
+                    events.swapList(eventsList)
+                }
             }
 
 
@@ -222,7 +117,20 @@ fun Header(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text(currentDate, fontWeight = FontWeight.Bold)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
+                    Text(currentDate, fontWeight = FontWeight.Bold)
+
+                    IconButton(
+                        onClick = { },
+                        modifier = Modifier.size(25.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "event settings"
+                        )
+                    }
+                }
+
                 Box(
                     Modifier
                         .fillMaxSize()
@@ -341,7 +249,7 @@ fun <T> SnapshotStateList<T>.swapList(newList: List<T>) {
 }
 
 @Composable
-fun Body(navController: NavHostController, events: SnapshotStateList<Event>) {
+fun Body(events: SnapshotStateList<Event>) {
     Box(
         Modifier
             .fillMaxSize()
@@ -354,39 +262,26 @@ fun Body(navController: NavHostController, events: SnapshotStateList<Event>) {
         ) {
             Text("Today", fontWeight = FontWeight.Bold, fontSize = 20.sp)
             Spacer(modifier = Modifier.size(15.dp))
-            EventsList(navController, events)
+            EventsList(events)
         }
     }
 }
 
-//@Composable
-//fun EventsList(navController: NavHostController, events: Flow<PagingData<Event>>) {
-////fun EventsList(navController: NavHostController, events: SnapshotStateList<Event>) {
-//    val lazyEvents: LazyPagingItems<Event> = events.collectAsLazyPagingItems()
-//    LazyColumn {
-//        items(lazyEvents) {
-//            event -> event?.let {
-//                Item(it, navController)
-//            }
-//        }
-//    }
-//
-//}
-
-
 @Composable
-fun EventsList(navController: NavHostController, events: SnapshotStateList<Event>) {
+fun EventsList(events: SnapshotStateList<Event>) {
     val reversedEvents = events.reversed()
     LazyColumn() {
         items(reversedEvents) {
-            Item(it, navController)
+            Item(it)
         }
     }
 }
 
 @Composable
-fun Item(event: Event, navController: NavHostController) {
+fun Item(event: Event) {
     val openDialog = remember { mutableStateOf(false) }
+    val project =
+        projectsList.find { it.id == event.projectId } ?: throw Resources.NotFoundException()
 
     Button(
         onClick = {
@@ -400,10 +295,15 @@ fun Item(event: Event, navController: NavHostController) {
     ) {
         val hm = DateTimeFormatter.ofPattern("HH:mm")
         val startedDate = LocalDateTime.parse(event.started, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-        val endedDate = LocalDateTime.parse(event.started, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        val endedDate = LocalDateTime.parse(event.ended, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+
+        val diffSeconds: Long = ChronoUnit.SECONDS.between(startedDate, endedDate)
+        val minutes = (diffSeconds / 60) % 60
+        val hours = (diffSeconds / 60) / 60
+
         Column() {
             Text(
-                "${hm.format(startedDate)} - ${hm.format(endedDate)} ",
+                "${hm.format(startedDate)} - ${hm.format(endedDate)}",
                 fontWeight = FontWeight.Bold
             )
             Row(
@@ -415,11 +315,11 @@ fun Item(event: Event, navController: NavHostController) {
             ) {
                 Column() {
                     Text(event.description, fontWeight = FontWeight.Bold)
-                    Text("Project X")
+                    Text(project.name)
                 }
 
                 Column() {
-                    Text("2 hrs 35 mins", fontWeight = FontWeight.Bold)
+                    Text("$hours hrs $minutes mins", fontWeight = FontWeight.Bold)
                     Row(
                         horizontalArrangement = Arrangement.End
                     ) {
@@ -457,20 +357,6 @@ fun Item(event: Event, navController: NavHostController) {
     }
 }
 
-data class Validation(val values: Map<String, Any>) {
-    fun validate() {
-
-    }
-}
-
-data class Form<T>(
-    val start: String,
-    val end: String,
-    val description: String,
-    val isBillable: Boolean,
-    val isRemote: Boolean
-)
-
 @Composable
 fun DialogForm(closeDialog: () -> Unit, event: Event) {
     val hasError =
@@ -481,6 +367,8 @@ fun DialogForm(closeDialog: () -> Unit, event: Event) {
                 Pair("description", false)
             )
         }
+
+    val isSubmitEnabled = hasError.toList().none { it.second }
 
     val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm")
     val startDateTime = LocalDateTime.parse(event.started)
@@ -522,11 +410,18 @@ fun DialogForm(closeDialog: () -> Unit, event: Event) {
     }
 
     val onSubmit: () -> Unit = {
-        if (hasError.values.find { it } != null) {
-            // void
-        } else {
-            // mutate state
+        eventsList.find {
+            it.id == event.id
+        }?.let {
+            it.description = descriptionState.value.text
+            it.isBillable = isBillableState.value
+            it.isRemote = isRemoteState.value
+            it.tagsId = listOf()
+//            it.started = startState.value.toString()
+//            it.ended = endState.value.toString()
         }
+
+        closeDialog()
     }
 
     Box(
@@ -582,7 +477,7 @@ fun DialogForm(closeDialog: () -> Unit, event: Event) {
                             Text(text = "Billable")
                             Switch(
                                 checked = isBillableState.value,
-                                enabled = false,
+                                enabled = true,
                                 onCheckedChange = { isBillableState.value = it },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.Black
@@ -593,7 +488,7 @@ fun DialogForm(closeDialog: () -> Unit, event: Event) {
                             Text(text = "Remote")
                             Switch(
                                 checked = isRemoteState.value,
-                                enabled = false,
+                                enabled = true,
                                 onCheckedChange = { isRemoteState.value = it },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.Black
@@ -607,15 +502,11 @@ fun DialogForm(closeDialog: () -> Unit, event: Event) {
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    Button(enabled = true, onClick = {
-                        closeDialog()
-                    }) {
+                    Button(enabled = true, onClick = closeDialog) {
                         Text(text = "Cancel")
                     }
                     Spacer(modifier = Modifier.size(8.dp))
-                    Button(enabled = false, onClick = {
-
-                    }) {
+                    Button(enabled = isSubmitEnabled, onClick = onSubmit) {
                         Text(text = "Save")
                     }
                 }
@@ -623,19 +514,3 @@ fun DialogForm(closeDialog: () -> Unit, event: Event) {
         }
     }
 }
-
-//@Composable
-//fun ShowTimePicker(context: Context, initHour: Int, initMinute: Int) {
-//    val time = remember { mutableStateOf("") }
-//    val timePickerDialog = TimePickerDialog(
-//        context,
-//        {_, hour : Int, minute: Int ->
-//            time.value = "$hour:$minute"
-//        }, initHour, initMinute, false
-//    )
-//    Button(onClick = {
-//        timePickerDialog.show()
-//    }) {
-//        Text(text = "Open Time Picker")
-//    }
-//}

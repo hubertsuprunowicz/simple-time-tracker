@@ -1,5 +1,6 @@
 package com.zk.timetracker
 
+import EventsScreen
 import com.zk.timetracker.screens.TimeTrackerScreen
 import androidx.annotation.StringRes
 import androidx.compose.material.*
@@ -73,60 +74,22 @@ private fun MainScreenNavigationConfigurations(
 ) {
     val passedSeconds = remember { mutableStateOf(0) }
     val isPlaying = remember { mutableStateOf(false) }
-    val timer = Timer(true)
+    val timer = Timer(passedSeconds, isPlaying)
 
     NavHost(navController, startDestination = BottomNavigationScreens.TimeTracker.route) {
         composable(BottomNavigationScreens.TimeTracker.route) {
-            TimeTrackerScreen(navController, passedSeconds, isPlaying, timer)
+            TimeTrackerScreen(passedSeconds, isPlaying, timer)
         }
         composable(BottomNavigationScreens.Another.route) {
-            AnotherScreen()
+            EventsScreen()
         }
-        composable("events/{eventId}") { backStackEntry ->
-            run {
-                val eventId = backStackEntry.arguments?.getString("eventId") ?: throw Exception()
-                return@composable EventScreen(eventId)
-            }
-        }
-
+//        composable("events/{eventId}") { backStackEntry ->
+//            run {
+//                val eventId = backStackEntry.arguments?.getString("eventId") ?: throw Exception()
+//                return@composable EventScreen(eventId)
+//            }
+//        }
     }
-}
-
-@Composable
-fun AnotherScreen() {
-//    val context = LocalContext.current
-//    val customView = remember { LottieAnimationView(context) }
-//    // Adds view to Compose
-//    AndroidView(
-//        { customView },
-//        modifier = Modifier.background(Color.Black)
-//    ) { view ->
-//        // View's been inflated - add logic here if necessary
-//        with(view) {
-//            setAnimation(scaryAnimation.animId)
-//            playAnimation()
-//            repeatMode = LottieDrawable.REVERSE
-//        }
-//    }
-}
-
-@Composable
-fun EventScreen(eventId: String) {
-    Text("com.zk.timetracker.models.Event - $eventId")
-//    val context = LocalContext.current
-//    val customView = remember { LottieAnimationView(context) }
-//    // Adds view to Compose
-//    AndroidView(
-//        { customView },
-//        modifier = Modifier.background(Color.Black)
-//    ) { view ->
-//        // View's been inflated - add logic here if necessary
-//        with(view) {
-//            setAnimation(scaryAnimation.animId)
-//            playAnimation()
-//            repeatMode = LottieDrawable.REVERSE
-//        }
-//    }
 }
 
 @Composable
@@ -138,7 +101,7 @@ private fun BottomNavigation(
         val currentRoute = currentRoute(navController)
         items.forEach { screen ->
             BottomNavigationItem(
-                icon = { Icon(screen.icon, "") },
+                icon = { Icon(screen.icon, "Navigation") },
                 label = { Text(stringResource(id = screen.resourceId)) },
                 selected = currentRoute == screen.route,
 //                alwaysShowLabel = false,
